@@ -46,7 +46,7 @@ def build_logfuncs(env, target, source):
 	
 	f_out.close()
 	
-	print 'Generated %s' % target[0]
+	print('Generated %s' % target[0])
 
 gl_env = g_env.Clone()
 gl_env.Append( CPPPATH = '#' )
@@ -66,8 +66,12 @@ m4_list = (
 	'../linux/glimp_local.h' )
 
 for i_m4 in m4_list:
-	gl_env.M4( i_m4, i_m4 + '.m4' )
-	gl_env.Depends( i_m4, '../gllog/gl_def.m4' )
+	gl_env.Command(
+		target = i_m4,
+		source = i_m4 + '.m4',
+		action = 'm4 -I sys/gllog $SOURCE > $TARGET'
+	)
+	gl_env.Depends( i_m4, '#sys/gllog/gl_def.m4' )
 
 # enable if you need to generate again
 # FIXME: conflicts when several environements are used. move that to seperate script
