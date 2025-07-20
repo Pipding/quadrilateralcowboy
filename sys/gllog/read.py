@@ -12,7 +12,7 @@ def read_gl(f_in):
 
 	for line in lines:
 		if ( len(line) ): # drop empty lines
-			tokens = string.split(line, ';')
+			tokens = line.split(';')
 			if ( tokens[1] == 'qgl' ):
 				gl.append(tokens)
 			elif ( tokens[1] == 'qwgl' ):

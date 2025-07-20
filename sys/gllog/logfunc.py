@@ -12,10 +12,10 @@ def do_logfunc(f_in, f_out):
 	for l in (gl, glX):
 		for t in l:
 			# process ret type to strip trailing spaces
-			t[0] = string.strip(t[0])
+			t[0] = t[0].strip()
 			f_out.write('static %s APIENTRY log%s(%s) {\n' % ( t[0], t[2], t[3] ))
 			# work on parameters
-			base_params = string.split(t[3], ',')
+			base_params = t[3].split(',')
 			#f_out.write('// %s\n' % repr(base_params))
 			# init format string and parameter list
 			params = []
@@ -26,7 +26,7 @@ def do_logfunc(f_in, f_out):
 			for i in base_params:
 				regex = re.compile('([a-zA-Z0-9]*)$')
 				name = regex.search(i).group(1)
-				type = string.strip(i[0:len(i)-len(name)])				
+				type = i[0:len(i)-len(name)].strip()
 				# catch type with no name
 				if (len(type) == 0):
 					type = name
