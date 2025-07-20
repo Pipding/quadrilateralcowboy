@@ -3,7 +3,7 @@
 # TTimo <ttimo@idsoftware.com>
 # http://scons.sourceforge.net
 
-import sys, os, time, commands, re, pickle, StringIO, popen2, commands, pdb, zipfile, string
+import sys, os, time, subprocess, re, pickle, io, pdb, zipfile, string
 import SCons
 
 sys.path.append( 'sys/scons' )
@@ -149,12 +149,12 @@ EnsureSConsVersion( 0, 96 )
 # system detection -------------------------------
 
 # CPU type
-cpu = commands.getoutput('uname -m')
+cpu = subprocess.getoutput('uname -m')
 exp = re.compile('.*i?86.*')
 if exp.match(cpu):
 	cpu = 'x86_64'
 else:
-	cpu = commands.getoutput('uname -p')
+	cpu = subprocess.getoutput('uname -p')
 	if ( cpu == 'powerpc' ):
 		cpu = 'ppc'
 	else:
@@ -197,19 +197,19 @@ STEAM = '0'
 
 # site settings ----------------------------------
 
-if ( not ARGUMENTS.has_key( 'NOCONF' ) or ARGUMENTS['NOCONF'] != '1' ):
+if ('NOCONF' not in ARGUMENTS or ARGUMENTS['NOCONF'] != '1'):
 	site_dict = {}
 	if (os.path.exists(conf_filename)):
-		site_file = open(conf_filename, 'r')
-		p = pickle.Unpickler(site_file)
-		site_dict = p.load()
-		print 'Loading build configuration from ' + conf_filename + ':'
+		with open(conf_filename, 'rb') as site_file:
+			p = pickle.Unpickler(site_file)
+			site_dict = p.load()
+		print('Loading build configuration from ' + conf_filename + ':')
 		for k, v in site_dict.items():
 			exec_cmd = k + '=\'' + v + '\''
-			print '  ' + exec_cmd
+			print('  ' + exec_cmd)
 			exec(exec_cmd)
 else:
-	print 'Site settings ignored'
+	print('Site settings ignored')
 
 # end site settings ------------------------------
 
@@ -217,22 +217,21 @@ else:
 
 for k in ARGUMENTS.keys():
 	exec_cmd = k + '=\'' + ARGUMENTS[k] + '\''
-	print 'Command line: ' + exec_cmd
+	print('Command line: ' + exec_cmd)
 	exec( exec_cmd )
 
 # end command line settings ----------------------
 
 # save site configuration ----------------------
 
-if ( not ARGUMENTS.has_key( 'NOCONF' ) or ARGUMENTS['NOCONF'] != '1' ):
+if ('NOCONF' not in ARGUMENTS or ARGUMENTS['NOCONF'] != '1'):
 	for k in serialized:
 		exec_cmd = 'site_dict[\'' + k + '\'] = ' + k
 		exec(exec_cmd)
 
-	site_file = open(conf_filename, 'w')
-	p = pickle.Pickler(site_file)
-	p.dump(site_dict)
-	site_file.close()
+	with open(conf_filename, 'wb') as site_file:
+		p = pickle.Pickler(site_file)
+		p.dump(site_dict)
 
 # end save site configuration ------------------
 
@@ -308,7 +307,7 @@ if ( g_os == 'Linux' ):
 	# BASELINKFLAGS.append( '-m32' )
 	#rpath
 	#BASELINKFLAGS.append( '-Wl,-rpath=\$$ORIGIN/lib' )
-	BASELINKFLAGS.append( '-Wl,-rpath=\$$ORIGIN/lib64' )
+	BASELINKFLAGS.append( r'-Wl,-rpath=\$$ORIGIN/lib64' )
 
 if ( g_sdk or SDK != '0' ):
 	BASECPPFLAGS.append( '-D_D3SDK' )
@@ -332,7 +331,7 @@ elif ( BUILD == 'release' ):
 	if ( ID_MCHECK == '0' ):
 		ID_MCHECK = '2'
 else:
-	print 'Unknown build configuration ' + BUILD
+	print('Unknown build configuration ' + BUILD)
 	sys.exit(0)
 
 if ( GL_HARDLINK != '0' ):
@@ -389,7 +388,7 @@ g_env_noopt.Append( CPPFLAGS = '-fno-strict-aliasing' )
 g_game_env.Append( CPPFLAGS = '-fno-strict-aliasing' )
 
 if ( int(JOBS) > 1 ):
-	print 'Using buffered process output'
+	print('Using buffered process output')
 	silent = False
 	if ( SILENT == '1' ):
 		silent = True
@@ -511,6 +510,7 @@ if ( TARGET_MONO_D3XP == '1' or TARGET_MONO == '1' ):
 
 	Export( 'GLOBALS ' + GLOBALS )
 	VariantDir( g_build + '/mono/glimp', '.', duplicate = 1 )
+	VariantDir( g_build + '/mono/glimp/sys/gllog', 'sys/gllog', duplicate = 0 )
 	SConscript( g_build + '/mono/glimp/sys/scons/SConscript.gl' )
 	VariantDir( g_build + '/mono', '.', duplicate = 0 )
 	idlib_objects = SConscript( g_build + '/mono/sys/scons/SConscript.idlib' )
@@ -552,7 +552,7 @@ if ( SETUP != '0' ):
 	if ( TARGET_CORE == '1' and TARGET_GAME == '1' and TARGET_D3XP == '1' ):
 		setup = Command( 'setup', [ brandelf, doom, doomded, game, d3xp ], Action( g_env.BuildSetup ) )
 	else:
-		print 'Skipping main setup: TARGET_CORE == 0 or TARGET_GAME == 0'
+		print('Skipping main setup: TARGET_CORE == 0 or TARGET_GAME == 0')
 	if ( TARGET_DEMO == '1' ):
 		setup_demo = Command( 'setup-demo', [ brandelf, doom_demo, game_demo ], Action( g_env.BuildSetup ) )
 		# if building two setups, make sure JOBS doesn't parallelize them
@@ -561,7 +561,7 @@ if ( SETUP != '0' ):
 		except:
 			pass
 	else:
-		print 'Skipping demo setup ( TARGET_DEMO == 0 )'
+		print('Skipping demo setup ( TARGET_DEMO == 0 )')
 
 if ( SDK != '0' ):
 	setup_sdk = Command( 'sdk', [ ], Action( g_env.BuildSDK ) )
