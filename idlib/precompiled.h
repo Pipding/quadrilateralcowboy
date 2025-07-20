@@ -119,7 +119,8 @@ using std::min;
 #ifdef __APPLE__
 #include <SDL.h>
 #else
-#include <SDL2/SDL.h> // Really should just be SDL.h but oh welllll -flibit
+// #include <SDL2/SDL.h> // Really should just be SDL.h but oh welllll -flibit
+#include <SDL.h> // I believe the line above this from flibit is necessary, but it didn't work for me. I'm sure he knew better than me and changing this has broken something else. -pipding
 #endif
 #endif
 
