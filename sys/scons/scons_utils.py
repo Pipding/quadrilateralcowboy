@@ -1,5 +1,5 @@
 # -*- mode: python -*-
-import sys, os, string, time, commands, re, pickle, StringIO, popen2, commands, pdb, zipfile, tempfile
+import sys, os, time, re, pickle, io, subprocess, pdb, zipfile, tempfile
 import SCons
 
 # need an Environment and a matching buffered_spawn API .. encapsulate
@@ -16,12 +16,12 @@ class idBuffering:
 			command_string += i
 		try:
 			retval = self.env['PSPAWN']( sh, escape, cmd, args, env, stdout, stderr )
-		except OSError, x:
+		except( OSError, x):
 			if x.errno != 10:
 				raise x
-			print 'OSError ignored on command: %s' % command_string
+			print('OSError ignored on command: %s' % command_string)
 			retval = 0
-		print command_string
+		print(command_string)
 		if ( retval != 0 or not self.silent ):
 			sys.stdout.write( stdout.getvalue() )
 			sys.stderr.write( stderr.getvalue() )
@@ -30,8 +30,8 @@ class idBuffering:
 class idSetupBase:
 	
 	def SimpleCommand( self, cmd ):
-		print cmd
-		ret = commands.getstatusoutput( cmd )
+		print(cmd)
+		ret = subprocess.getstatusoutput( cmd )
 		if ( len( ret[ 1 ] ) ):
 			sys.stdout.write( ret[ 1 ] )
 			sys.stdout.write( '\n' )
@@ -40,8 +40,8 @@ class idSetupBase:
 		return ret[ 1 ]
 
 	def TrySimpleCommand( self, cmd ):
-		print cmd
-		ret = commands.getstatusoutput( cmd )
+		print(cmd)
+		ret = subprocess.getstatusoutput( cmd )
 		sys.stdout.write( ret[ 1 ] )
 
 	def M4Processing( self, file, d ):
@@ -103,12 +103,12 @@ def checkLDD( target, source, env ):
 	if (not os.path.isfile(file.abspath)):
 		print('ERROR: CheckLDD: target %s not found\n' % target[0])
 		Exit(1)
-	( status, output ) = commands.getstatusoutput( 'ldd -r %s' % file )
+	( status, output ) = subprocess.getstatusoutput( 'ldd -r %s' % file )
 	if ( status != 0 ):
-		print 'ERROR: ldd command returned with exit code %d' % ldd_ret
+		print('ERROR: ldd command returned with exit code %d' % ldd_ret)
 		os.system( 'rm %s' % target[ 0 ] )
 		sys.exit(1)
-	lines = string.split( output, '\n' )
+	lines = output.split('\n')
 	have_undef = 0
 	for i_line in lines:
 		#print repr(i_line)
@@ -120,8 +120,8 @@ def checkLDD( target, source, env ):
 			except:
 				have_undef = 1
 	if ( have_undef ):
-		print output
-		print "ERROR: undefined symbols"
+		print(output)
+		print("ERROR: undefined symbols")
 		os.system('rm %s' % target[0])
 		sys.exit(1)
 
@@ -131,7 +131,7 @@ def SharedLibrarySafe( env, target, source ):
 	return ret
 
 def NotImplementedStub( *whatever ):
-	print 'Not Implemented'
+	print('Not Implemented')
 	sys.exit( 1 )
 
 # --------------------------------------------------------------------
@@ -168,7 +168,7 @@ def SetupUtils( env ):
 		env.PreBuildSDK = sdk.PreBuildSDK
 		env.BuildSDK = sdk.BuildSDK
 	except:
-		print 'SDK.py hookup failed'
+		print('SDK.py hookup failed')
 		env.PreBuildSDK = NotImplementedStub
 		env.BuildSDK = NotImplementedStub
 	try:
@@ -176,11 +176,11 @@ def SetupUtils( env ):
 		setup = Setup.idSetup()
 		env.BuildSetup = setup.BuildSetup
 	except:
-		print 'Setup.py hookup failed'
+		print('Setup.py hookup failed')
 		env.BuildSetup = NotImplementedStub
 
 def BuildList( s_prefix, s_string ):
-	s_list = string.split( s_string )
+	s_list = s_string.split()
 	for i in range( len( s_list ) ):
 		s_list[ i ] = s_prefix + '/' + s_list[ i ]
 	return s_list
