@@ -17,3 +17,14 @@ ipch/
 _upgradereport_files/
 steam/
 makefile
+
+# Build artifacts
+qc.bin.x86_64
+scons.signatures.dblite
+site.conf
+
+# Python cache
+__pycache__/
+
+# Ignore all __pycache__ in subdirectories
+**/__pycache__/
